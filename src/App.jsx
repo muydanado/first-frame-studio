@@ -19,7 +19,6 @@ import {
   Image as ImageIcon,
   X,
   Target,
-  Move,
   Compass,
   Focus,
   Play,       // Novo ícone para Vídeo
@@ -105,17 +104,6 @@ const ANGLES = [
   { id: "handheld", label: "Câmara à Mão", fragment: "with realistic handheld camera shake" },
 ];
 
-// Adicionado 'videoAction' para descrever o movimento em formato de vídeo
-const MOTIONS = [
-  { id: "static", label: "Plano Estático", fragment: "perfectly static composition", videoAction: "The camera remains static with subtle subject movement" },
-  { id: "push_in", label: "Push-In", fragment: "captured during a slow push-in movement", videoAction: "The camera slowly pushes in towards the subject" },
-  { id: "pull_back", label: "Pull-Back", fragment: "captured during a pull-back movement", videoAction: "The camera slowly pulls back revealing more of the scene" },
-  { id: "dolly", label: "Dolly Shot", fragment: "captured on a smooth dolly track", videoAction: "The camera moves smoothly sideways on a dolly track" },
-  { id: "tracking", label: "Tracking Shot", fragment: "captured during a lateral tracking shot", videoAction: "The camera tracks the subject laterally with high stability" },
-  { id: "crane", label: "Crane Shot", fragment: "captured from a soaring crane height", videoAction: "The camera booms up vertically establishing the scene" },
-  { id: "drone", label: "Drone Aerial", fragment: "captured via professional drone cinematography", videoAction: "Aerial drone shot flying over the scene" },
-];
-
 const CAMERAS = [
   { id: "digital_ff", label: "Digital Cinema (Full-Frame)", fragment: "shot on professional full-frame digital cinema camera" },
   { id: "s35", label: "Digital Cinema (Super 35)", fragment: "shot on super 35 digital cinema sensor" },
@@ -156,6 +144,78 @@ const LOOKS = {
   ]
 };
 
+// Módulo de movimentos de câmera para prompts de vídeo (Kling/Veo)
+const CAMERA_MOVEMENT_MODULE = {
+  description: "Módulo de Instrução para Definição de Movimento de Câmera (Cinematografia AI)",
+  instruction: "Ao gerar o prompt de vídeo, selecione UM movimento primário que amplifique a narrativa. Priorize o termo técnico em inglês no início ou logo após a ação.",
+  TRANSLATION_MOVES: [
+    { type: "Slow Dolly In", use_case: "Intimidade, foco no sujeito, entrada na cena." },
+    { type: "Slow Dolly Out", use_case: "Isolamento, revelação do contexto, abandono." },
+    { type: "Fast Dolly In (Crash Zoom)", use_case: "Urgência, choque, realização súbita." },
+    { type: "Truck Left", use_case: "Seguir ação lateral, revelar cenário horizontalmente." },
+    { type: "Truck Right", use_case: "Seguir ação lateral, revelar cenário horizontalmente." },
+    { type: "Pedestal Up", use_case: "Revelar altura, majestade ou detalhe no chão." },
+    { type: "Pedestal Down", use_case: "Revelar altura, majestade ou detalhe no chão." }
+  ],
+  ROTATION_MOVES: [
+    { type: "Pan Left", use_case: "Survey do ambiente, seguir sujeito passando." },
+    { type: "Pan Right", use_case: "Survey do ambiente, seguir sujeito passando." },
+    { type: "Tilt Up", use_case: "Revelar grandeza (pés à cabeça), edifícios, poder." },
+    { type: "Tilt Down", use_case: "Revelar elementos no solo, submissão." },
+    { type: "Dutch Angle", use_case: "Desorientação, caos, tensão psicológica, horror." },
+    { type: "Camera Roll", use_case: "Desorientação, caos, tensão psicológica, horror." }
+  ],
+  ORBITAL_MOVES: [
+    { type: "Orbit 180", use_case: "Mudança de fundo mantendo o sujeito, dinâmica de diálogo." },
+    { type: "Fast 360 Orbit (Spin)", use_case: "Ação frenética, transformação, magia, tontura." },
+    { type: "Slow Cinematic Arc", use_case: "Dramatismo, romance, apresentação épica do personagem." }
+  ],
+  OPTICAL_MOVES: [
+    { type: "Rack Focus", use_case: "Mudança de atenção de um objeto próximo para o fundo (ou vice-versa)." },
+    { type: "Reveal From Blur", use_case: "Início de cena, despertar, sonho para realidade." },
+    { type: "Dolly Zoom (Vertigo Effect)", use_case: "Medo extremo, realização chocante, distorção da realidade." },
+    { type: "Extreme Macro Zoom", use_case: "Transição de olho/célula para mundo visível." }
+  ],
+  TRACKING_MOVES: [
+    { type: "Leading Shot (Backward Tracking)", use_case: "Câmera recua enquanto sujeito avança (foco na expressão frontal)." },
+    { type: "Following Shot (Forward Tracking)", use_case: "Câmera segue atrás do sujeito (imersão no mundo dele)." },
+    { type: "Side Tracking (Parallel)", use_case: "Perfil, caminhada, conversa em movimento." },
+    { type: "Over-The-Shoulder (OTS)", use_case: "Diálogo, observação furtiva, perspectiva de 3ª pessoa." }
+  ],
+  AERIAL_MOVES: [
+    { type: "Drone Flyover", use_case: "Estabelecer local, viagem, grandes paisagens." },
+    { type: "Top-Down View (God's Eye)", use_case: "Diagramas, labirintos, multidões, geometria." },
+    { type: "FPV Drone Dive", use_case: "Adrenalina, queda livre, velocidade extrema." },
+    { type: "Crane Up (High Angle Reveal)", use_case: "Final de filme, expansão de horizonte." }
+  ],
+  STYLE_MODIFIERS: [
+    { type: "Handheld Camera", use_case: "Realismo, documentário, instabilidade, ação crua." },
+    { type: "Whip Pan", use_case: "Transição rápida e borrada entre dois focos de interesse." },
+    { type: "Fly-Through Shot", use_case: "Passar através de janelas, buracos ou espaços apertados." }
+  ]
+};
+
+const MOVEMENT_CATEGORIES = [
+  { key: "TRANSLATION_MOVES", label: "Translação" },
+  { key: "ROTATION_MOVES", label: "Rotação/Eixo" },
+  { key: "ORBITAL_MOVES", label: "Orbitais" },
+  { key: "OPTICAL_MOVES", label: "Ópticos" },
+  { key: "TRACKING_MOVES", label: "Tracking" },
+  { key: "AERIAL_MOVES", label: "Aéreas/Drone" }
+];
+
+const CAMERA_MOVES = MOVEMENT_CATEGORIES.flatMap(cat =>
+  (CAMERA_MOVEMENT_MODULE[cat.key] || []).map(m => ({
+    ...m,
+    category: cat.label
+  }))
+);
+
+const CAMERA_STYLE_MODIFIERS = (CAMERA_MOVEMENT_MODULE.STYLE_MODIFIERS || []).map(s => ({
+  ...s,
+  category: "Modificador de Estilo"
+}));
+
 const ASPECT_RATIOS = [
   { id: "239", label: "2.39:1 (CinemaScope)", fragment: "--ar 2.39:1" },
   { id: "200", label: "2.00:1 (Streaming)", fragment: "--ar 2:1" },
@@ -171,9 +231,11 @@ const DEFAULT_CONSTRAINTS = "digital art, illustration, painting, drawing, carto
 export default function App() {
   const [config, setConfig] = useState({
     sceneAction: "",
+    actionBeat: "",
     shotType: "pm",
     angle: "eye",
-    motion: "static",
+    cameraMove: "",
+    cameraStyle: "",
     camera: "digital_ff",
     lens: "prime35",
     focal: "35mm",
@@ -182,7 +244,10 @@ export default function App() {
   });
 
   const [translatedAction, setTranslatedAction] = useState("");
-  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatedActionBeat, setTranslatedActionBeat] = useState("");
+  const [isTranslatingScene, setIsTranslatingScene] = useState(false);
+  const [isTranslatingActionBeat, setIsTranslatingActionBeat] = useState(false);
+  const isTranslating = isTranslatingScene || isTranslatingActionBeat;
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
@@ -198,18 +263,37 @@ export default function App() {
       return;
     }
     const timer = setTimeout(async () => {
-      setIsTranslating(true);
+      setIsTranslatingScene(true);
       try {
         const translated = await translateToEnglish(config.sceneAction);
         setTranslatedAction(translated);
       } catch (err) {
         console.error("Erro na tradução:", err);
       } finally {
-        setIsTranslating(false);
+        setIsTranslatingScene(false);
       }
     }, 1500);
     return () => clearTimeout(timer);
   }, [config.sceneAction]);
+
+  useEffect(() => {
+    if (!config.actionBeat.trim()) {
+      setTranslatedActionBeat("");
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsTranslatingActionBeat(true);
+      try {
+        const translated = await translateToEnglish(config.actionBeat);
+        setTranslatedActionBeat(translated);
+      } catch (err) {
+        console.error("Erro na tradução da ação:", err);
+      } finally {
+        setIsTranslatingActionBeat(false);
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [config.actionBeat]);
 
   const handleEnhance = async () => {
     if (!config.sceneAction.trim() || isEnhancing) return;
@@ -298,7 +382,8 @@ export default function App() {
   const promptBlocks = useMemo(() => {
     const shot = SHOT_TYPES.find(s => s.id === config.shotType);
     const ang = ANGLES.find(a => a.id === config.angle);
-    const mot = MOTIONS.find(m => m.id === config.motion);
+    const camMove = CAMERA_MOVES.find(m => m.type === config.cameraMove);
+    const camStyle = CAMERA_STYLE_MODIFIERS.find(s => s.type === config.cameraStyle);
     const cam = CAMERAS.find(c => c.id === config.camera);
     const len = LENSES.find(l => l.id === config.lens);
     const look = Object.values(LOOKS).flat().find(l => l.id === config.look);
@@ -308,31 +393,50 @@ export default function App() {
     if (config.look === 'soft') atmosphere = "soft focus, ethereal light rays, dreamy glow, low contrast";
 
     return {
-      "1_DESCRIÇÃO_DA_CENA": translatedAction || (config.sceneAction ? "Traduzindo..." : "[Aguardando ação...]"),
-      "2_COMPOSIÇÃO": `${shot?.fragment}, ${ang?.fragment}, ${mot?.fragment}`,
-      "3_CÂMERA_E_ÓPTICA": `${cam?.fragment} using ${len?.fragment} at ${config.focal}`,
-      "4_TRATAMENTO_VISUAL": `${look?.fragment || "standard cinematic look"}`,
-      "5_ATMOSFERA": atmosphere,
-      "6_RESTRIÇÕES": `[Negative: ${DEFAULT_CONSTRAINTS}]`
+      "1_CENA": translatedAction || (config.sceneAction ? "Traduzindo..." : "[Aguardando cena...]"),
+      "2_AÇÃO": translatedActionBeat || (config.actionBeat ? "Traduzindo ação..." : "[Sem ação adicional]"),
+      "3_MOVIMENTO_DE_CÂMERA": camMove ? `${camMove.type}${camStyle ? ` + ${camStyle.type}` : ""}` : "[Sem movimento]",
+      "4_COMPOSIÇÃO": `${shot?.fragment}, ${ang?.fragment}`,
+      "5_CÂMERA_E_ÓPTICA": `${cam?.fragment} using ${len?.fragment} at ${config.focal}`,
+      "6_TRATAMENTO_VISUAL": `${look?.fragment || "standard cinematic look"}`,
+      "7_ATMOSFERA": atmosphere,
+      "8_RESTRIÇÕES": `[Negative: ${DEFAULT_CONSTRAINTS}]`
     };
-  }, [config, translatedAction]);
+  }, [config, translatedAction, translatedActionBeat]);
 
   const finalPrompt = useMemo(() => {
     const values = Object.values(promptBlocks);
     const ratioStr = ASPECT_RATIOS.find(r => r.id === config.ratio)?.fragment || "";
-    return `A high-quality cinematic movie still of ${values[0]}, ${values.slice(1, 5).join(", ")} ${ratioStr}`.trim();
+    const narrative = values[0];
+    const technical = values.slice(3, 7).join(", ");
+    return `A high-quality cinematic movie still of ${narrative}. ${technical} ${ratioStr}`.trim();
   }, [promptBlocks, config.ratio]);
 
   // Novo Memo para o Prompt de Vídeo Estruturado
   const finalVideoPrompt = useMemo(() => {
     const values = Object.values(promptBlocks);
-    const mot = MOTIONS.find(m => m.id === config.motion);
+    const camMove = CAMERA_MOVES.find(m => m.type === config.cameraMove);
+    const camStyle = CAMERA_STYLE_MODIFIERS.find(s => s.type === config.cameraStyle);
     const shot = SHOT_TYPES.find(s => s.id === config.shotType);
+    const shotFraming = shot?.fragment ? `${shot.fragment} framing` : 'balanced cinematic framing';
     
     // Estrutura específica para Vídeo (ex: Gen-2, Pika, Luma)
-    // Foca em Sujeito + Ação + Movimento de Câmera Explícito
-    return `Cinematic video clip: ${values[0]}. ${mot?.videoAction || "Stable camera movement"}. ${shot?.label} framing. ${values[3]}. High fidelity, 4k, temporal stability, highly detailed, smooth motion.`.trim();
-  }, [promptBlocks, config.motion, config.shotType]);
+    // Foca em Sujeito + Ação + Movimento logo depois da ação (Kling/Veo)
+    const narrative = config.actionBeat.trim() ? `${values[0]}. ${values[1]}` : values[0];
+    const movementTag = camMove ? `Camera Movement: ${camMove.type}${camStyle ? ` + ${camStyle.type}` : ""}.` : "";
+    const ratioStr = ASPECT_RATIOS.find(r => r.id === config.ratio)?.fragment || "";
+    const parts = [
+      `Cinematic video clip: ${narrative}.`,
+      movementTag,
+      `${shotFraming}.`,
+      `${values[4]}.`,
+      `${values[5]}.`,
+      `${values[6]}.`,
+      `${ratioStr ? `${ratioStr} ` : ""}24fps, duration 4s.`,
+      `${values[7]} High fidelity, 4k, temporal stability, highly detailed, smooth motion.`
+    ].filter(Boolean);
+    return parts.join(" ").trim();
+  }, [promptBlocks, config.shotType, config.actionBeat, config.cameraMove, config.cameraStyle, config.ratio]);
 
   const copyToClipboard = () => {
     const textArea = document.createElement("textarea");
@@ -353,9 +457,15 @@ export default function App() {
   };
 
   const clearForm = () => {
-    setConfig({sceneAction: "", shotType: "pm", angle: "eye", motion: "static", camera: "digital_ff", lens: "prime35", focal: "35mm", ratio: "239", look: "nat"});
+    setConfig({sceneAction: "", actionBeat: "", shotType: "pm", angle: "eye", cameraMove: "", cameraStyle: "", camera: "digital_ff", lens: "prime35", focal: "35mm", ratio: "239", look: "nat"});
+    setTranslatedAction("");
+    setTranslatedActionBeat("");
     setImagePreview(null);
   };
+
+  const canCopy = outputMode === 'video'
+    ? translatedAction && (!config.actionBeat.trim() || translatedActionBeat)
+    : !!translatedAction;
 
   return (
     // Container externo que simula o desktop (fundo)
@@ -414,11 +524,11 @@ export default function App() {
               </div>
             </section>
 
-            {/* Ação Dramática */}
+            {/* Cena */}
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <label className="text-[10px] font-bold text-neutral-500 uppercase flex items-center gap-2 tracking-widest">
-                  <Type className="w-3.5 h-3.5 text-red-500" /> Ação Dramática
+                  <Type className="w-3.5 h-3.5 text-red-500" /> Cena
                 </label>
                 <button onClick={handleEnhance} disabled={!config.sceneAction || isEnhancing} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase transition-all bg-neutral-900 border-neutral-800 text-amber-500 hover:border-amber-500 hover:bg-amber-500/10 disabled:opacity-20 shadow-md">
                   {isEnhancing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
@@ -438,9 +548,27 @@ export default function App() {
               </div>
             </section>
 
+            {/* Ação */}
+            <section className="space-y-3">
+              <label className="text-[10px] font-bold text-neutral-500 uppercase flex items-center gap-2 tracking-widest">
+                <Type className="w-3.5 h-3.5 text-red-500" /> Ação
+              </label>
+              <div className="relative">
+                <textarea 
+                  className="w-full min-h-[100px] bg-neutral-900 border border-neutral-800 rounded-xl p-4 text-sm focus:border-red-600 focus:ring-1 focus:ring-red-600/20 outline-none transition-all resize-none text-neutral-200 shadow-inner placeholder:text-neutral-700 leading-relaxed"
+                  placeholder="Detalhe a ação ou batida dramática (ex: protagonista corre, derruba objetos, respira ofegante)..."
+                  value={config.actionBeat}
+                  onChange={(e) => setConfig({...config, actionBeat: e.target.value})}
+                />
+                <div className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/80 rounded-md border border-neutral-800 text-[8px] text-neutral-500 font-bold uppercase tracking-widest">
+                  <Languages className="w-3 h-3" /> Auto-Eng
+                </div>
+              </div>
+            </section>
+
             {/* Controles Técnicos */}
             <div className="space-y-8">
-              <div className="grid gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-neutral-500 uppercase flex items-center gap-2 tracking-widest">
                     <Video className="w-3.5 h-3.5 text-red-500" /> Enquadramento
@@ -449,23 +577,42 @@ export default function App() {
                     {SHOT_TYPES.map(s => <option key={`shot-${s.id}`} value={s.id}>{s.label}</option>)}
                   </select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-neutral-500 uppercase flex items-center gap-2 tracking-widest">
-                      <Compass className="w-3.5 h-3.5 text-red-500" /> Ângulo
-                    </label>
-                    <select className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-xs focus:border-red-600 outline-none cursor-pointer shadow-md appearance-none text-neutral-300" value={config.angle} onChange={(e) => setConfig({...config, angle: e.target.value})}>
-                      {ANGLES.map(a => <option key={`angle-${a.id}`} value={a.id}>{a.label}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-neutral-500 uppercase flex items-center gap-2 tracking-widest">
-                      <Move className="w-3.5 h-3.5 text-red-500" /> Movimento
-                    </label>
-                    <select className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-xs focus:border-red-600 outline-none cursor-pointer shadow-md appearance-none text-neutral-300" value={config.motion} onChange={(e) => setConfig({...config, motion: e.target.value})}>
-                      {MOTIONS.map(m => <option key={`motion-${m.id}`} value={m.id}>{m.label}</option>)}
-                    </select>
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-neutral-500 uppercase flex items-center gap-2 tracking-widest">
+                    <Compass className="w-3.5 h-3.5 text-red-500" /> Ângulo
+                  </label>
+                  <select className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-xs focus:border-red-600 outline-none cursor-pointer shadow-md appearance-none text-neutral-300" value={config.angle} onChange={(e) => setConfig({...config, angle: e.target.value})}>
+                    {ANGLES.map(a => <option key={`angle-${a.id}`} value={a.id}>{a.label}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-neutral-500 uppercase flex items-center gap-2 tracking-widest">
+                    <Video className="w-3.5 h-3.5 text-red-500" /> Movimento de Câmera
+                  </label>
+                  <select className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-xs focus:border-red-600 outline-none cursor-pointer shadow-md appearance-none text-neutral-300" value={config.cameraMove} onChange={(e) => setConfig({...config, cameraMove: e.target.value})}>
+                    <option value="">Sem movimento</option>
+                    {MOVEMENT_CATEGORIES.map(cat => (
+                      <optgroup key={`mov-cat-${cat.key}`} label={cat.label} className="bg-neutral-900 text-neutral-500 italic">
+                        {CAMERA_MOVES.filter(m => m.category === cat.label).map(m => (
+                          <option key={`move-${m.type}`} value={m.type}>{m.type} — {m.use_case}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-neutral-500 uppercase flex items-center gap-2 tracking-widest">
+                    <Video className="w-3.5 h-3.5 text-red-500" /> Modificador de Estilo
+                  </label>
+                  <select className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-xs focus:border-red-600 outline-none cursor-pointer shadow-md appearance-none text-neutral-300" value={config.cameraStyle} onChange={(e) => setConfig({...config, cameraStyle: e.target.value})}>
+                    <option value="">Sem modificador</option>
+                    {CAMERA_STYLE_MODIFIERS.map(m => (
+                      <option key={`style-${m.type}`} value={m.type}>{m.type} — {m.use_case}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -558,7 +705,7 @@ export default function App() {
                       <span className="text-red-600 font-mono text-sm opacity-80">{key.split('_')[0]}</span>
                       <span className="tracking-widest">{key.split('_').slice(1).join(' ').replace('DESCRIÇÃO DA CENA', 'Narrativa')}</span>
                     </div>
-                    <div className={`p-5 text-sm font-mono leading-relaxed transition-colors ${key.includes('DESCRIÇÃO') ? 'text-red-400 font-bold italic' : 'text-neutral-500 group-hover:text-neutral-300'}`}>
+                    <div className={`p-5 text-sm font-mono leading-relaxed transition-colors ${(key.includes('CENA') || key.includes('AÇÃO') || key.includes('MOVIMENTO')) ? 'text-red-400 font-bold italic' : 'text-neutral-500 group-hover:text-neutral-300'}`}>
                       {value}
                     </div>
                   </div>
@@ -586,7 +733,7 @@ export default function App() {
                     </button>
                   </div>
                 </div>
-                <button onClick={copyToClipboard} disabled={!translatedAction || isTranslating || isAnalyzing} className={`px-14 py-6 rounded-full font-black text-sm flex items-center gap-4 transition-all duration-500 shadow-2xl uppercase tracking-[0.2em] active:scale-95 ${!translatedAction || isTranslating || isAnalyzing ? 'bg-neutral-800 text-neutral-600 opacity-40' : copied ? 'bg-emerald-600 text-white shadow-emerald-900/20' : 'bg-red-600 text-white hover:scale-105 shadow-red-900/40'}`}>
+                <button onClick={copyToClipboard} disabled={!canCopy || isTranslating || isAnalyzing} className={`px-14 py-6 rounded-full font-black text-sm flex items-center gap-4 transition-all duration-500 shadow-2xl uppercase tracking-[0.2em] active:scale-95 ${!canCopy || isTranslating || isAnalyzing ? 'bg-neutral-800 text-neutral-600 opacity-40' : copied ? 'bg-emerald-600 text-white shadow-emerald-900/20' : 'bg-red-600 text-white hover:scale-105 shadow-red-900/40'}`}>
                   {copied ? <Check className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
                   {copied ? 'Copiado!' : `Copiar ${outputMode === 'video' ? 'Video' : 'Frame'}`}
                 </button>
@@ -623,7 +770,7 @@ export default function App() {
                  <p className="text-[13px] text-neutral-500 leading-relaxed font-medium">
                    {outputMode === 'image' 
                      ? "O modelo Nano Banana v1 prioriza a lógica óptica sobre a artística. O Studio injeta automaticamente parâmetros de HDR e Global Illumination." 
-                     : "O prompt de vídeo é otimizado para estabilidade temporal. Movimentos como 'Tracking' e 'Dolly' são convertidos em instruções explícitas de câmara."}
+                     : "O prompt de vídeo é otimizado para estabilidade temporal. Enquadramento e ótica são convertidos em instruções explícitas de câmara."}
                  </p>
                </div>
             </div>
